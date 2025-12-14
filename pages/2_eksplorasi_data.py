@@ -30,7 +30,7 @@ yang digunakan untuk melatih model prediksi.
 @st.cache_data
 def load_data():
     try:
-        df = pd.read_csv("data_kopi.csv")
+        df = pd.read_csv("data/data_kopi.csv")
         return df
     except FileNotFoundError:
         return None

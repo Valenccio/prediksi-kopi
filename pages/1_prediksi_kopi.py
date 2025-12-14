@@ -14,85 +14,118 @@ import joblib
 import pandas as pd
 import base64
 
-# ===========================
-# CSS Card / Box Transparan
-# ===========================
-card_style = """
-<style>
-.card {
-    background-color: rgba(255, 255, 255, 0.60);  /* putih 60% transparan */
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    margin-bottom: 20px;
-}
-</style>
-"""
+st.set_page_config(
+    page_title="Prediksi Kopi",
+    page_icon="🔮",
+    layout="centered"
+)
 
-st.markdown(card_style, unsafe_allow_html=True)
+# =============== BACKGROUND OPSIONAL ===============
+def add_bg_from_local(image_file: str):
+    try:
+        with open(image_file, "rb") as f:
+            encoded_string = base64.b64encode(f.read()).decode()
 
-# ===========================
-# Fitur Background Image
-# ===========================
-def add_bg_from_local(bg_kopi):
-    with open(bg_kopi, "rb") as f:
-        encoded_string = base64.b64encode(f.read()).decode()
+        st.markdown(
+            f"""
+            <style>
+            .stApp {{
+                background-image: url("data:image/jpg;base64,{encoded_string}");
+                background-size: cover;
+                background-repeat: no-repeat;
+                background-attachment: fixed;
+            }}
+            /* overlay halus supaya teks tetap kebaca */
+            .stApp::before {{
+                content: "";
+                position: fixed;
+                inset: 0;
+                background: rgba(255, 255, 255, 0.35);
+                z-index: -1;
+            }}
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+    except FileNotFoundError:
+        pass
 
-    st.markdown(
-        f"""
-        <style>
-        .stApp {{
-            background-image: url("data:image/jpg;base64,{encoded_string}");
-            background-size: cover;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
+add_bg_from_local("assets/bg.jpg")
 
-# Panggil sebelum UI
-add_bg_from_local("bg.jpg")
+# =============== GLOBAL CSS ===============
+def set_style():
+    st.markdown("""
+    <style>
+    .block-container {
+        padding-top: 2.5rem;
+        padding-bottom: 2rem;
+        max-width: 900px;
+    }
 
+    .page-title {
+        font-size: 1.9rem;
+        font-weight: 800;
+        text-align: center;
+        margin-bottom: 0.2rem;
+    }
 
-# ===========================
-# Load model
-# ===========================
+    .page-subtitle {
+        text-align: center;
+        font-size: 0.95rem;
+        color: #555;
+        margin-bottom: 1.5rem;
+    }
+
+    .card {
+        background-color: rgba(255, 255, 255, 0.85);
+        padding: 1.5rem 1.8rem;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        margin-bottom: 1.2rem;
+    }
+
+    .card-result {
+        background: rgba(255, 255, 255, 0.92);
+        padding: 1.2rem 1.6rem;
+        border-radius: 16px;
+        box-shadow: 0 10px 26px rgba(0,0,0,0.18);
+        border-left: 5px solid #7b3f00;
+        margin-bottom: 1.2rem;
+    }
+
+    /* Tombol lebih keren */
+    div.stButton > button:first-child {
+        background: linear-gradient(90deg, #7b3f00, #b86b20);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: 999px;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+    }
+    div.stButton > button:first-child:hover {
+        filter: brightness(1.05);
+        box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+set_style()
+
+# =============== LOAD MODEL ===============
 @st.cache_resource
 def load_model():
-    return joblib.load("model_kopi.pkl")
+    return joblib.load("models/model_kopi.pkl")
 
 model = load_model()
 
-# ===========================
-# UI
-# ===========================
-st.title("☕ Prediksi Penjualan Kopi")
-st.write("Masukkan informasi pemesan untuk melihat prediksi penjualan.")
+# =============== HEADER ===============
+st.markdown('<div class="page-title"> Prediksi Penjualan Kopi</div>', unsafe_allow_html=True)
+st.markdown('<div class="page-subtitle">Masukkan karakteristik pemesan & waktu untuk melihat prediksi penjualan kopi, lengkap dengan grafik per jam.</div>', unsafe_allow_html=True)
 
-# ===========================
-# 2. Judul & Deskripsi
-# ===========================
-st.title("☕ Prediksi Penjualan Kopi")
-st.write(
-    """
-Aplikasi ini memprediksi **jumlah cup kopi** yang akan terjual berdasarkan:
-- Jenis kopi
-- Jenis kelamin pemesan
-- Umur
-- Jam pemesanan
-
-Model ini dilatih dari data riwayat penjualan.
-"""
-)
-
-# ===========================
-# 3. Input dari user
-# ===========================
+# =============== CARD INPUT ===============
 st.markdown('<div class="card">', unsafe_allow_html=True)
-
-st.subheader(" Input Prediksi")
+st.markdown("###  Input Parameter Prediksi")
 
 col1, col2 = st.columns(2)
 
@@ -100,7 +133,7 @@ jenis_kopi_list = ["Americano", "Latte", "Cappuccino", "Mocha", "Espresso"]
 
 with col1:
     jenis_kopi = st.selectbox(
-        "Pilih jenis kopi utama",
+        "Jenis kopi utama",
         jenis_kopi_list
     )
 
@@ -108,24 +141,30 @@ with col1:
     jenis_kopi_2 = None
     if bandingkan:
         jenis_kopi_2 = st.selectbox(
-            "Pilih jenis kopi pembanding",
+            "Jenis kopi pembanding",
             [jk for jk in jenis_kopi_list if jk != jenis_kopi]
         )
 
+with col2:
     jenis_kelamin = st.selectbox(
         "Jenis kelamin pemesan",
         ["Laki-laki", "Perempuan"]
     )
 
-with col2:
+st.markdown("")
+
+col3, col4, col5 = st.columns([1, 1, 1.2])
+
+with col3:
     umur = st.number_input(
-        "Umur pemesan (tahun)",
+        "Umur (tahun)",
         min_value=10,
         max_value=80,
         value=25,
         step=1
     )
 
+with col4:
     jam = st.number_input(
         "Jam pemesanan (0–23)",
         min_value=0,
@@ -134,17 +173,21 @@ with col2:
         step=1
     )
 
-show_graph = st.checkbox("Tampilkan grafik prediksi per jam", value=True)
+with col5:
+    show_graph = st.checkbox("Tampilkan grafik per jam", value=True)
 
-st.markdown("</div>", unsafe_allow_html=True)
-# ===========================
-# 4. Tombol Prediksi
-# ===========================
+st.markdown('</div>', unsafe_allow_html=True)
 
-if st.button(" Prediksi Penjualan"):
-    # =======================
-    # 1. Prediksi kopi utama di jam yang dipilih
-    # =======================
+# =============== TOMBOL ===============
+center_col = st.columns(3)[1]
+with center_col:
+    submit = st.button("Prediksi Penjualan")
+
+st.markdown("")
+
+# =============== LOGIKA PREDIKSI & OUTPUT ===============
+if submit:
+    # 1. Prediksi kopi utama di jam terpilih
     data_baru = pd.DataFrame([{
         "jenis_kopi": jenis_kopi,
         "jenis_kelamin": jenis_kelamin,
@@ -155,17 +198,17 @@ if st.button(" Prediksi Penjualan"):
     prediksi = model.predict(data_baru)[0]
     prediksi = round(prediksi, 2)
 
-    st.success(
-        f"Perkiraan jumlah cup **{jenis_kopi}** yang akan terjual pada jam {jam}: "
-        f"**{prediksi} cup**"
+    st.markdown('<div class="card-result">', unsafe_allow_html=True)
+    st.markdown(
+        f"""
+        <h4>Hasil Prediksi</h4>
+        <p>Perkiraan jumlah cup <b>{jenis_kopi}</b> yang akan terjual pada jam <b>{jam}:00</b> adalah:</p>
+        <p style="font-size: 1.8rem; font-weight: 800; margin: 0.2rem 0 0.6rem 0;">
+            {prediksi} cup
+        </p>
+        """,
+        unsafe_allow_html=True
     )
-
-    with st.expander("Lihat detail input yang digunakan"):
-        st.write(data_baru)
-
-    # =======================
-    # 2. Kalau bandingkan diaktifkan → prediksi kopi kedua
-    # =======================
     if bandingkan and jenis_kopi_2 is not None:
         data_baru_2 = pd.DataFrame([{
             "jenis_kopi": jenis_kopi_2,
@@ -173,25 +216,30 @@ if st.button(" Prediksi Penjualan"):
             "umur": umur,
             "jam": jam
         }])
-
         prediksi_2 = model.predict(data_baru_2)[0]
         prediksi_2 = round(prediksi_2, 2)
 
-        st.info(
-            f"Perkiraan jumlah cup **{jenis_kopi_2}** pada jam {jam}: "
-            f"**{prediksi_2} cup**"
+        st.markdown(
+            f"""
+            <p>Untuk perbandingan, jenis kopi <b>{jenis_kopi_2}</b> pada jam yang sama diperkirakan terjual:</p>
+            <p style="font-size: 1.3rem; font-weight: 700; margin: 0.1rem 0 0.4rem 0;">
+                {prediksi_2} cup
+            </p>
+            """,
+            unsafe_allow_html=True
         )
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    # =======================
-    # 3. Grafik prediksi per jam (0–23)
-    # =======================
+    with st.expander(" Detail input yang digunakan"):
+        st.write(data_baru)
+
+    # 2. Grafik per jam
     if show_graph:
-        st.markdown("---")
-        st.subheader(" Prediksi Penjualan per Jam (0–23)")
+        st.markdown("### Prediksi Penjualan per Jam (0–23)")
 
         jam_list = list(range(24))
 
-        # --- kopi utama ---
+        # kopi utama
         df_sim_1 = pd.DataFrame([
             {
                 "jenis_kopi": jenis_kopi,
@@ -203,13 +251,12 @@ if st.button(" Prediksi Penjualan"):
         ])
         pred_1 = model.predict(df_sim_1)
 
-        # DataFrame untuk grafik
         df_grafik = pd.DataFrame({
             "Jam": jam_list,
             jenis_kopi: pred_1
         })
 
-        # --- kopi kedua (kalau ada perbandingan) ---
+        # kopi pembanding kalau ada
         if bandingkan and jenis_kopi_2 is not None:
             df_sim_2 = pd.DataFrame([
                 {
@@ -223,18 +270,13 @@ if st.button(" Prediksi Penjualan"):
             pred_2 = model.predict(df_sim_2)
             df_grafik[jenis_kopi_2] = pred_2
 
-        # bulatkan biar enak dibaca
         for col in df_grafik.columns:
             if col != "Jam":
                 df_grafik[col] = df_grafik[col].round(2)
 
-        # pakai Jam sebagai index, sehingga tiap kolom = jenis kopi
         st.line_chart(df_grafik.set_index("Jam"))
 
-        # tabel kecil di bawah grafik (opsional)
-        with st.expander("Lihat data angka untuk grafik"):
+        with st.expander(" Data angka untuk grafik"):
             st.dataframe(df_grafik)
-    else:
-        st.caption("Grafik dimatikan. Centang opsi **Tampilkan grafik prediksi per jam** untuk melihat grafik.")
 else:
     st.info("Silakan isi parameter di atas lalu klik tombol **Prediksi Penjualan**.")
