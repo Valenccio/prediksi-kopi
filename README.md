@@ -67,7 +67,7 @@ This project is part of my personal portfolio to demonstrate my understanding of
 
 ```text
 .
-├─ Home.py                  
+├─ home.py                  
 ├─ requirements.txt
 ├─ README.md
 ├─ data/
