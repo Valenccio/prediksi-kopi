@@ -67,12 +67,15 @@ This project is part of my personal portfolio to demonstrate my understanding of
 
 ```text
 .
-├─ Home.py               
+├─ Home.py                  
 ├─ requirements.txt
 ├─ README.md
-├─ data_kopi.csv        
-├─ model_kopi.pkl  
-├─ bg.jpg
+├─ data/
+│  └─ data_kopi.csv       
+├─ models/
+│  └─ model_kopi.pkl        
+├─ assets/
+│  ├─ bg.jpg                
 └─ pages/
    ├─ 1_Prediksi_Kopi.py    
    └─ 2_Eksplorasi_Data.py  
