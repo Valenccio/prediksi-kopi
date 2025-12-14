@@ -63,6 +63,10 @@ This project is part of my personal portfolio to demonstrate my understanding of
 
 ---
 
+Link deployed for demo: https://prediksi-kopi-x3uem39z4al9n8vkrmuwz9.streamlit.app/prediksi_kopi
+
+---
+
 ##  Project Structure
 
 ```text
